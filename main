@@ -1,0 +1,860 @@
+from tkinter import *
+from tkinter import ttk
+import tkinter
+from tkinter import ttk
+from PIL import ImageTk, Image
+import os
+import numpy as np
+from os import path
+from tkinter import messagebox
+import random
+import tkinter.scrolledtext as tkst
+import pandas as pd
+import tkinter as tk
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from datetime import date
+from operator import itemgetter
+ 
+main = Tk()
+
+#GUI
+main.title('Database')
+main.geometry('1200x600')
+
+import mysql.connector
+mydb = mysql.connector.connect(
+  host="***",
+  user="***",
+  password="***",
+  database="***"
+)
+
+"""Check Last Input Date"""
+mycursor0 = mydb.cursor()
+mycursor0.execute("SELECT * FROM dates")
+result = mycursor0.fetchall()
+Messagestring = ""
+for row in result:
+        Messagestring = Messagestring + str(row)
+        
+
+"""functie New"""
+#Game functions
+def entergame():
+    Name = GXX41.get()
+    Number = GXX42.get()
+    Year = GXX43.get()
+    Publisher = GXX44.get()
+    Price = GXX45.get()
+    Console = GXX47.get()
+    Worth = GXX48.get()
+    
+    mycursor = mydb.cursor()
+    sql = "INSERT IGNORE INTO assets_games (name, number, year, publisher, price, console, worth) VALUES (%s, %s, %s, %s, %s, %s, %s)" 
+    val = (Name, Number,Year,Publisher, Price, Console, Worth)
+    mycursor.execute(sql, val)
+    mydb.commit()
+
+    messagebox.showinfo("Info", str(mycursor.rowcount) + " record inserted.")
+    
+def showallgames():
+    CountRowsO = 0
+    SA = []
+    StringShowAll = ""
+    mycursor = mydb.cursor()
+    sql = "SELECT * FROM assets_games "
+    mycursor.execute(sql)
+    myresult = mycursor.fetchall()
+    for x in myresult:
+        CountRowsO = CountRowsO + 1
+        SA.append(str(x))
+        StringShowAll = StringShowAll + str(x) + "\n"
+ 
+    for i in range(0,CountRowsO):
+        listbox.insert(END, str(SA[i]))
+
+    nb.select(page2)
+
+#Comic functions
+#Date functions
+def InputLastDate():
+    today = date.today()
+    mycursor0 = mydb.cursor()
+    SqlDate = "UPDATE dates SET workdates = %s WHERE version = %s"
+    ValDate = (today, "Last_Input")
+    mycursor0.execute(SqlDate, ValDate)
+    mydb.commit()
+
+def DeleteDates():
+    mycursor = mydb.cursor()
+    sql = "DELETE from dates ORDER BY id desc limit 1"
+    mycursor.execute(sql)
+    mydb.commit()
+    messagebox.showinfo("Info", "last record deleted")
+
+#Database functions
+def callback():
+    Name = GXX1.get()
+    Number = GXX2.get()
+    Year = GXX3.get()
+    Publisher = GXX4.get()
+    Price = GXX5.get()
+    Version = GXX6.get()
+    Volume = GXX7.get()
+    Worth = GXX8.get()
+    Valuta = GXX10.get()    
+    mycursor = mydb.cursor()
+
+    sql = "INSERT IGNORE INTO assets_comics (name, number, year, publisher, price, version, volume, worth, valuta) VALUES (%s, %s,%s, %s,%s, %s, %s, %s, %s)" 
+    val = (Name, Number,Year,Publisher, Price, Version, Volume, Worth, Valuta)
+
+    mycursor.execute(sql, val)
+    mydb.commit()    
+    InputLastDate()    
+    messagebox.showinfo("Info", str(mycursor.rowcount) + " record inserted.")
+
+def deletelastrecord():
+    mycursor = mydb.cursor()
+    sql = "DELETE from assets_comics ORDER BY id desc limit 1"
+    mycursor.execute(sql)
+    mydb.commit()
+    messagebox.showinfo("Info", "last record deleted")
+
+def showall():
+    #textfile as log
+    GNLog = open("ShowAll.txt", "w")
+    LogList = []
+    #textfile as log end
+    CountRowsO = 0
+    SA = []
+    StringShowAll = ""
+    mycursor = mydb.cursor()
+    sql = "SELECT * FROM assets_comics order by name, year, number "
+    mycursor.execute(sql)
+    myresult = mycursor.fetchall()
+    TotalDB = 0
+    for x in myresult:
+        TotalDB = TotalDB + 1
+        CountRowsO = CountRowsO + 1
+        SA.append(str(x))
+        #textfilelog
+        LogList.append(str(x) + " \n")
+        #textfilelog end
+        StringShowAll = StringShowAll + str(x) + "\n"
+ 
+    for i in range(0,CountRowsO):
+        listbox.insert(END, str(SA[i]))
+    #textfilelog
+    GNLog.writelines(LogList)
+    GNLog.close
+    #textfilelog end
+    nb.select(page2)
+    messagebox.showinfo("Info", "In totaal " + str(TotalDB) + " items toegevoegd.")
+    
+def deleteoverview():
+    listbox.delete('0','end')
+
+def showallfrom():
+    From = GXX9.get()
+    CountRowsO = 0
+    SA = []
+    StringShowAll = ""
+    mycursor = mydb.cursor()
+    sql = "SELECT * FROM assets_comics WHERE publisher = '%s'" % (str(From))
+    mycursor.execute(sql)
+    myresult = mycursor.fetchall()
+
+    TotalDB = 0
+    for x in myresult:
+        TotalDB = TotalDB + 1
+        CountRowsO = CountRowsO + 1
+        SA.append(str(x))
+        StringShowAll = StringShowAll + str(x) + "\n"
+ 
+    for i in range(0,CountRowsO):
+        listbox.insert(END, str(SA[i]))
+    nb.select(page2)
+    messagebox.showinfo("Info", "In totaal " + str(TotalDB) + " items toegevoegd.")
+
+def showallfromtitle():
+    From = GXX91.get()
+    CountRowsO = 0
+    SA = []
+    StringShowAll = ""
+    #textfile as log
+    GNLog = open(str(From)+".txt", "w")
+    LogList = []
+    #textfile as log end
+    mycursor = mydb.cursor()
+    sql = "SELECT * FROM assets_comics WHERE name = '%s' order by name, year, number" % (str(From))
+    mycursor.execute(sql)
+    myresult = mycursor.fetchall()
+
+    TotalDB = 0
+    for x in myresult:
+        TotalDB = TotalDB + 1
+        CountRowsO = CountRowsO + 1
+        SA.append(str(x))
+        #textfilelog
+        LogList.append(str(x) + " \n")
+        #textfilelog end
+        StringShowAll = StringShowAll + str(x) + "\n"
+ 
+    for i in range(0,CountRowsO):
+        listbox.insert(END, str(SA[i]))
+    #textfilelog
+    GNLog.writelines(LogList)
+    GNLog.close
+    #textfilelog end
+    nb.select(page2)
+    messagebox.showinfo("Info", "In totaal " + str(TotalDB) + " items toegevoegd.")
+
+def countcomicsperpublisher():
+    CountRowsO = 0
+    SA = []
+    StringShowAll = ""
+    mycursor = mydb.cursor()
+    sql = "SELECT publisher, Count(*) from  assets_comics WHERE version <> 'GN - AM' OR 'GN - NL' GROUP BY publisher "
+    mycursor.execute(sql)
+    myresult = mycursor.fetchall()
+    for x in myresult:
+        CountRowsO = CountRowsO + 1
+        SA.append(str(x))
+        StringShowAll = StringShowAll + str(x) + "\n"
+ 
+    for i in range(0,CountRowsO):
+        listbox.insert(END, str(SA[i]))
+
+    nb.select(page2)
+
+def countversions():
+    CountRowsO = 0
+    SA = []
+    StringShowAll = ""
+    mycursor = mydb.cursor()
+    sql = "SELECT version, Count(*) from  assets_comics GROUP BY version "
+    mycursor.execute(sql)
+    myresult = mycursor.fetchall()
+    for x in myresult:
+        CountRowsO = CountRowsO + 1
+        SA.append(str(x))
+        StringShowAll = StringShowAll + str(x) + "\n"
+ 
+    for i in range(0,CountRowsO):
+        listbox.insert(END, str(SA[i]))
+
+    nb.select(page2)
+
+def countnryear():
+    CountRowsO = 0
+    SA = []
+    StringShowAll = ""
+    mycursor = mydb.cursor()
+    sql = "SELECT year, Count(*) from  assets_comics GROUP BY year "
+    mycursor.execute(sql)
+    myresult = mycursor.fetchall()
+    for x in myresult:
+        CountRowsO = CountRowsO + 1
+        SA.append(str(x))
+        StringShowAll = StringShowAll + str(x) + "\n"
+ 
+    for i in range(0,CountRowsO):
+        listbox.insert(END, str(SA[i]))
+
+    nb.select(page2)
+
+def showonlyGN():
+    #textfile as log
+    GNLog = open("GraphicNovelLog.txt", "w")
+    LogList = []
+    #textfile as log end
+    CountRowsO = 0
+    SA = []
+    StringShowAll = ""
+    mycursor = mydb.cursor()
+    sql = "SELECT * FROM assets_comics WHERE version = 'GN - AM' OR 'GN - NL' order by name, year, number"
+    mycursor.execute(sql)
+    myresult = mycursor.fetchall()
+    for x in myresult:
+        CountRowsO = CountRowsO + 1
+        SA.append(str(x))
+        #textfilelog
+        LogList.append(str(x) + " \n")
+        #textfilelog end
+        StringShowAll = StringShowAll + str(x) + "\n"
+ 
+    for i in range(0,CountRowsO):
+        listbox.insert(END, str(SA[i]))
+    #textfilelog
+    GNLog.writelines(LogList)
+    GNLog.close
+    #textfilelog end
+
+    nb.select(page2)    
+
+#Visualise Data functions
+def CalcData():
+    #get all publishers
+    PubDict = {}
+    CountRowsO = 0
+    SA = []
+    StringShowAll = ""
+    mycursor = mydb.cursor()
+    sql = "SELECT publisher, Count(*) from  assets_comics GROUP BY publisher "
+    mycursor.execute(sql)
+    myresult = mycursor.fetchall()
+    for x in myresult:
+        CountRowsO = CountRowsO + 1
+        SA.append([x[0],x[1]])
+        StringShowAll = StringShowAll + str(x) + "\n"
+ 
+    for i in range(0,CountRowsO):
+        listbox.insert(END, str(SA[i]))
+
+    for o in SA:
+        PubDict[o[0]] = o[1]
+
+    nb.select(page2)
+
+def CalcSeries():
+    #get all series
+    PubName = {}
+    CountRowsO = 0
+    SA = []
+    StringShowAll = ""
+    mycursor = mydb.cursor()
+    sql = "SELECT name, Count(*) from  assets_comics GROUP BY name "
+    mycursor.execute(sql)
+    myresult = mycursor.fetchall()
+    for x in myresult:
+        CountRowsO = CountRowsO + 1
+        SA.append([x[0],x[1]])
+        StringShowAll = StringShowAll + str(x) + "\n"
+ 
+    for i in range(0,CountRowsO):
+        listbox.insert(END, str(SA[i]))
+
+    first_item = itemgetter(1)
+    SA1 = sorted(SA, key = first_item, reverse=True)
+
+    p = 0
+    for o in SA1:
+        PubName[o[0]] = o[1]
+        p = p + 1
+        if p == 6:
+                break        
+    nb.select(page2)
+
+
+#functions on comic actions page
+def backupdatabase():
+    mycursor = mydb.cursor()
+    sql = ("DROP TABLE IF EXISTS backupassetscomic; CREATE TABLE backupassetscomic LIKE assets_comics;")
+    mycursor.execute(sql, multi=True)
+    mydb.commit()
+
+    mycursor0 = mydb.cursor()
+    sql = ("INSERT INTO backupassetscomic SELECT * FROM assets_comics;")
+    mycursor0.execute(sql)
+    mydb.commit()
+    
+    mycursor1 = mydb.cursor()
+    sql = "SELECT * FROM backupassetscomic"
+    mycursor1.execute(sql)
+    myresult = mycursor1.fetchall()
+    TotalDB = 0
+    for x in myresult:
+        print(x)
+        TotalDB = TotalDB + 1
+    messagebox.showinfo("Info", str(TotalDB) + " records are backed up in TABLE backupassetscomic")
+
+def changerecords():
+    ValutaChange = GXX11.get()
+    VersionChange = GXX12.get()    
+    mycursor = mydb.cursor()
+    sql = "UPDATE assets_comics SET valuta = %s WHERE version = %s"
+    val = (ValutaChange, VersionChange)
+    mycursor.execute(sql, val)
+    mydb.commit()
+def changeonerecord():
+    WorthChange = GXX13.get()
+    IDChange = GXX14.get()    
+    mycursor = mydb.cursor()
+    sql = "UPDATE assets_comics SET worth = %s WHERE ID = %s"
+    val = (WorthChange, IDChange)
+    mycursor.execute(sql, val)
+    mydb.commit()
+def changerecordsII():
+    VChange = GXX15.get()
+    VIIChange = GXX16.get()    
+    mycursor = mydb.cursor()
+    sql = "UPDATE assets_comics SET version = %s WHERE version = %s"
+    val = (VChange, VIIChange)
+    mycursor.execute(sql, val)
+    mydb.commit()
+
+def ShowDataOneRecord():
+    NameToSearch = GXX17.get()
+    NumberToSearch = GXX18.get()
+    YearToSearch = GXX20.get()
+    mycursor = mydb.cursor()
+    sql = "SELECT * FROM assets_comics WHERE name = '%s' AND number = %s AND year = %s" % (str(NameToSearch),NumberToSearch , str(YearToSearch))
+    mycursor.execute(sql)
+    myresult = mycursor.fetchone()
+    try:
+        ID = myresult[0]
+        Year = myresult[3]
+        Pub = myresult[4]
+        Price = myresult[5]
+        Version = myresult[6]
+        Volume = myresult[7]
+        Worth = myresult[8]
+        Valuta = myresult[9]
+
+        GXX19.insert(0,ID) 
+        GXX21.insert(0,Pub)
+        GXX22.insert(0,Price)
+        GXX23.insert(0,Version)
+        GXX24.insert(0,Volume)
+        GXX25.insert(0,Worth)
+        GXX26.insert(0,Valuta)
+    except:
+        messagebox.showinfo("Error", "No valid record")
+
+def ShowDataOneRecordII():
+    ID = GXX19.get()
+    mycursor = mydb.cursor()
+    sql = "SELECT * FROM assets_comics WHERE id = '%s'" % (ID)
+    mycursor.execute(sql)
+    myresult = mycursor.fetchone()
+    try:
+        ID = myresult[0]
+        Name = myresult[1]
+        Number = myresult[2]
+        Year = myresult[3]
+        Pub = myresult[4]
+        Price = myresult[5]
+        Version = myresult[6]
+        Volume = myresult[7]
+        Worth = myresult[8]
+        Valuta = myresult[9]
+
+        GXX17.insert(0,Name)
+        GXX18.insert(0,Number)
+        GXX20.insert(0,Year)
+        GXX21.insert(0,Pub)
+        GXX22.insert(0,Price)
+        GXX23.insert(0,Version)
+        GXX24.insert(0,Volume)
+        GXX25.insert(0,Worth)
+        GXX26.insert(0,Valuta)
+    except:
+        messagebox.showinfo("Error", "No valid record")
+        
+
+def ChangeDataOneRecord():
+    Name = GXX17.get()
+    Number = GXX18.get()
+    ID = GXX19.get()
+    Year = GXX20.get()
+    Pub = GXX21.get()
+    Price = GXX22.get()
+    Version = GXX23.get()
+    Volume = GXX24.get()
+    Worth = GXX25.get()
+    Valuta = GXX26.get()
+    
+    mycursor = mydb.cursor()
+    sql = "UPDATE assets_comics SET name = %s, number = %s, year = %s, publisher = %s, price = %s, version = %s, volume = %s, worth = %s, valuta = %s WHERE ID = %s"
+    val = (Name, Number, Year, Pub, Price, Version, Volume, Worth, Valuta, ID)
+    mycursor.execute(sql, val)
+    mydb.commit()
+    
+    GXX17.delete(0,'end')
+    GXX18.delete(0,'end')
+    GXX19.delete(0,'end')
+    GXX20.delete(0,'end') 
+    GXX21.delete(0,'end') 
+    GXX22.delete(0,'end') 
+    GXX23.delete(0,'end') 
+    GXX24.delete(0,'end') 
+    GXX25.delete(0,'end') 
+    GXX26.delete(0,'end') 
+
+    messagebox.showinfo("Info", "One record changed")     
+
+
+"""Opmaak Tabs"""
+     
+# gives weight to the cells in the grid
+rows = 0
+while rows < 50:
+    main.rowconfigure(rows, weight=1)
+    main.columnconfigure(rows, weight=1)
+    rows += 1
+ 
+# Defines and places the notebook widget
+nb = ttk.Notebook(main)
+nb.grid(row=1, column=0, columnspan=50, rowspan=49, sticky='NESW')
+ 
+# Adds tab 1 of the notebook
+page1 = ttk.Frame(nb)
+nb.add(page1, text='Input comics')
+
+"""Opmaak 1ste tab"""
+#Setting it up
+
+img = ImageTk.PhotoImage(Image.open("S2099PNGS.png"))
+       
+#Displaying it
+imglabel1 = Label(page1, image=img).grid(row=12, column=5, padx=100, )
+
+
+tkinter.Label(page1, text="Name",borderwidth=1 ).grid(row=1,column=2)
+GXX1 = tkinter.Entry(page1,borderwidth=1, width =40 )
+GXX1.grid(row=1,column=3)
+
+tkinter.Label(page1, text="Versions:",borderwidth=1 ).grid(row=1,column=5)
+tkinter.Label(page1, text="AM : American",borderwidth=1 ).grid(row=2,column=5)
+tkinter.Label(page1, text="FR : French",borderwidth=1 ).grid(row=3,column=5)
+tkinter.Label(page1, text="GN - NL : Dutch Graphic Novel",borderwidth=1 ).grid(row=4,column=5)
+tkinter.Label(page1, text="GN - AM : American Graphic Novel",borderwidth=1 ).grid(row=5,column=5)
+tkinter.Label(page1, text="NL : Dutch",borderwidth=1 ).grid(row=6,column=5)
+tkinter.Label(page1, text="GN : Collected in graphic novel",borderwidth=1 ).grid(row=7,column=5)
+tkinter.Label(page1, text="AM - FCBD: American Free Comic Book Day",borderwidth=1 ).grid(row=8,column=5)
+tkinter.Label(page1, text="AM - VC: American Variant Cover",borderwidth=1 ).grid(row=9,column=5)
+tkinter.Label(page1, text="UK: Brittish",borderwidth=1 ).grid(row=10,column=5)
+tkinter.Label(page1, text="MA - FR/US/NL: Manga",borderwidth=1 ).grid(row=11,column=5)
+
+
+tkinter.Label(page1, text="Number",borderwidth=1 ).grid(row=2,column=2)
+GXX2 = tkinter.Entry(page1,borderwidth=1, width =40 )
+GXX2.grid(row=2,column=3)
+
+tkinter.Label(page1, text="Year",borderwidth=1 ).grid(row=3,column=2)
+GXX3 = tkinter.Entry(page1,borderwidth=1, width =40 )
+GXX3.grid(row=3,column=3)
+
+tkinter.Label(page1, text="Publisher",borderwidth=1 ).grid(row=4,column=2)
+GXX4 = tkinter.Entry(page1,borderwidth=1, width =40 )
+GXX4.grid(row=4,column=3)
+
+
+tkinter.Label(page1, text="Price",borderwidth=1 ).grid(row=5,column=2)
+GXX5 = tkinter.Entry(page1,borderwidth=1, width =40 )
+GXX5.grid(row=5,column=3)
+GXX10 = tkinter.Entry(page1,borderwidth=1, width =5 )
+GXX10.grid(row=5,column=4)
+GXX10.insert(0,"$")
+
+tkinter.Label(page1, text="Version",borderwidth=1 ).grid(row=6,column=2)
+GXX6 = tkinter.Entry(page1,borderwidth=1, width =40 )
+GXX6.grid(row=6,column=3)
+GXX6.insert(0,"AM")
+
+tkinter.Label(page1, text="Volume",borderwidth=1 ).grid(row=7,column=2)
+GXX7 = tkinter.Entry(page1,borderwidth=1, width =40 )
+GXX7.grid(row=7,column=3)
+
+tkinter.Label(page1, text="Worth",borderwidth=1 ).grid(row=8,column=2)
+GXX8 = tkinter.Entry(page1,borderwidth=1, width =40 )
+GXX8.grid(row=8,column=3)
+GXX8.insert(0, 0.25)
+
+
+
+BT11 = tkinter.Button(page1, text="Put in database", command=callback).grid(row=9,column=3)
+
+tkinter.Label(page1, text=Messagestring[18:29].replace(",","/") + " was the last input.",borderwidth=1 ).grid(row=10,column=3)
+
+BT12 = tkinter.Button(page1, text="Show all", command=showall).grid(row=9,column=8)
+
+tkinter.Label(page1, text="Show all from publisher",borderwidth=1 ).grid(row=1,column=6)
+GXX9 = tkinter.Entry(page1,borderwidth=1, width =20 )
+GXX9.grid(row=1,column=7)
+BT2 = tkinter.Button(page1, text="Show selected publ.", command=showallfrom).grid(row=1,column=8)
+
+tkinter.Label(page1, text="Show all from title",borderwidth=1 ).grid(row=2,column=6)
+GXX91 = tkinter.Entry(page1,borderwidth=1, width =20 )
+GXX91.grid(row=2,column=7)
+BT3 = tkinter.Button(page1, text="Show selected title", command=showallfromtitle).grid(row=2,column=8)
+
+BT4 = tkinter.Button(page1, text="Clear Overview", command=deleteoverview).grid(row=3,column=8)
+
+# Adds tab 2 of the notebook
+page2 = ttk.Frame(nb)
+nb.add(page2, text='Overview')
+
+CountRowsO = 0
+TempTTO = ""
+
+scrollbar = Scrollbar(page2)
+scrollbar.pack(side=RIGHT, fill=Y)
+
+listbox = Listbox(page2, yscrollcommand=scrollbar.set)
+for i in range(0,CountRowsO):
+    listbox.insert(END, str(TempTTO))
+listbox.pack(side=LEFT, fill=BOTH, ipadx = 660)
+
+scrollbar.config(command=listbox.yview)
+
+
+
+# Adds tab 3 of the notebook
+page3 = ttk.Frame(nb)
+nb.add(page3, text='Database actions - comics')
+
+BT31 = tkinter.Button(page3, text="Find versions", command=countversions).grid(row=9,column=1)
+
+tkinter.Label(page3, text="  ",borderwidth=1 ).grid(row=10,column=3)
+tkinter.Label(page3, text="Show record Data by name and number",borderwidth=1 ).grid(row=11,column=1)
+tkinter.Label(page3, text="Name",borderwidth=1 ).grid(row=12,column=2)
+GXX17 = tkinter.Entry(page3,borderwidth=1, width =20 )
+GXX17.grid(row=13,column=2)
+tkinter.Label(page3, text="Number",borderwidth=1 ).grid(row=12,column=3)
+GXX18 = tkinter.Entry(page3,borderwidth=1, width =10 )
+GXX18.grid(row=13,column=3)
+
+tkinter.Label(page3, text="ID - Fill in",borderwidth=1 ).grid(row=12,column=4)
+GXX19 = tkinter.Entry(page3,borderwidth=1, width =10 )
+GXX19.grid(row=13,column=4)
+tkinter.Label(page3, text="Year",borderwidth=1 ).grid(row=12,column=5)
+GXX20 = tkinter.Entry(page3,borderwidth=1, width =10 )
+GXX20.grid(row=13,column=5)
+tkinter.Label(page3, text="Publisher",borderwidth=1 ).grid(row=12,column=6)
+GXX21 = tkinter.Entry(page3,borderwidth=1, width =20 )
+GXX21.grid(row=13,column=6)
+tkinter.Label(page3, text="Price",borderwidth=1 ).grid(row=12,column=7)
+GXX22 = tkinter.Entry(page3,borderwidth=1, width =10 )
+GXX22.grid(row=13,column=7)
+tkinter.Label(page3, text="Version",borderwidth=1 ).grid(row=12,column=8)
+GXX23 = tkinter.Entry(page3,borderwidth=1, width =10 )
+GXX23.grid(row=13,column=8)
+tkinter.Label(page3, text="Volume",borderwidth=1 ).grid(row=12,column=9)
+GXX24 = tkinter.Entry(page3,borderwidth=1, width =10 )
+GXX24.grid(row=13,column=9)
+tkinter.Label(page3, text="Worth",borderwidth=1 ).grid(row=12,column=10)
+GXX25 = tkinter.Entry(page3,borderwidth=1, width =10 )
+GXX25.grid(row=13,column=10)
+tkinter.Label(page3, text="Valuta",borderwidth=1 ).grid(row=12,column=11)
+GXX26 = tkinter.Entry(page3,borderwidth=1, width =10 )
+GXX26.grid(row=13,column=11)
+
+BT32 = tkinter.Button(page3, text="Show Data By ID", command=ShowDataOneRecordII).grid(row=13,column=1)
+BT33 = tkinter.Button(page3, text="Change Data", command=ChangeDataOneRecord).grid(row=15,column=1)
+tkinter.Label(page3, text="  ",borderwidth=1 ).grid(row=16,column=1)
+
+BT34 = tkinter.Button(page3, text="Backup Database", command=backupdatabase).grid(row=17,column=1)
+
+# Adds tab 4 of the notebook
+page4 = ttk.Frame(nb)
+nb.add(page4, text='Input games')
+
+
+tkinter.Label(page4, text="Name",borderwidth=1 ).grid(row=1,column=2)
+GXX41 = tkinter.Entry(page4,borderwidth=1, width =40 )
+GXX41.grid(row=1,column=3)
+
+tkinter.Label(page4, text="Number",borderwidth=1 ).grid(row=2,column=2)
+GXX42 = tkinter.Entry(page4,borderwidth=1, width =40 )
+GXX42.grid(row=2,column=3)
+
+tkinter.Label(page4, text="Year",borderwidth=1 ).grid(row=3,column=2)
+GXX43 = tkinter.Entry(page4,borderwidth=1, width =40 )
+GXX43.grid(row=3,column=3)
+
+tkinter.Label(page4, text="Publisher",borderwidth=1 ).grid(row=4,column=2)
+GXX44 = tkinter.Entry(page4,borderwidth=1, width =40 )
+GXX44.grid(row=4,column=3)
+
+
+tkinter.Label(page4, text="Price",borderwidth=1 ).grid(row=5,column=2)
+GXX45 = tkinter.Entry(page4,borderwidth=1, width =40 )
+GXX45.grid(row=5,column=3)
+
+
+tkinter.Label(page4, text="Console",borderwidth=1 ).grid(row=6,column=2)
+GXX47 = tkinter.Entry(page4,borderwidth=1, width =40 )
+GXX47.grid(row=6,column=3)
+
+tkinter.Label(page4, text="Worth",borderwidth=1 ).grid(row=8,column=2)
+GXX48 = tkinter.Entry(page4,borderwidth=1, width =40 )
+GXX48.grid(row=8,column=3)
+GXX48.insert(0, 5)
+
+BT41 = tkinter.Button(page4, text="Put in database", command=entergame).grid(row=12,column=2)
+BT42 = tkinter.Button(page4, text="Show all", command=showallgames).grid(row=14,column=2)
+BT43 = tkinter.Button(page4, text="Clear Overview", command=deleteoverview).grid(row=3,column=8)     
+        
+
+# Adds tab 5 of the notebook
+page5 = ttk.Frame(nb)
+canvas = Canvas(page5)
+canvas.grid()
+nb.add(page5, text='Visualize data')
+
+#Tel hoeveel strips per uitgever
+PubDict = {}
+SA = []
+mycursor = mydb.cursor()
+sql = "SELECT publisher, Count(*) from  assets_comics GROUP BY publisher "
+mycursor.execute(sql)
+myresult = mycursor.fetchall()
+for x in myresult:
+    SA.append([x[0],x[1]])
+pp = 0 
+for o in SA:
+    PubDict[o[0]] = o[1]
+    pp = pp + 1
+    if pp == 10:
+            break
+
+#Tel hoeveel strips per jaar
+PubYear = {}
+SA1 = []
+xx = []
+mycursor = mydb.cursor()
+sql = "SELECT year, Count(*) from  assets_comics GROUP BY year "
+mycursor.execute(sql)
+myresult = mycursor.fetchall()
+for x in myresult:
+    SA1.append([x[0],x[1]])
+    xx.append(x[0]) 
+for o in SA1:
+    PubYear[o[0]] = o[1]
+
+#Tel hoeveel nummers per serie
+PubName = {}
+CountRowsO = 0
+SA0 = []
+mycursor = mydb.cursor()
+sql = "SELECT name, Count(*) from  assets_comics GROUP BY name "
+mycursor.execute(sql)
+myresult = mycursor.fetchall()
+for x in myresult:
+        CountRowsO = CountRowsO + 1
+        SA0.append([x[0],x[1]])
+
+first_item = itemgetter(1)
+SA1 = sorted(SA0, key = first_item, reverse=True)
+
+p = 0
+for o in SA1:
+    PubName[o[0]] = o[1]
+    p = p + 1
+    if p == 10:
+        break
+
+class MyClass():
+    def __init__(self):
+        self.sheets = [PubName, PubDict, PubYear]
+        self.names = list(PubName.keys())
+        self.values = list(PubName.values())
+        self.Cnames = list(PubDict.keys())
+        self.Cvalues = list(PubDict.values())
+        self.Ynames = list(PubYear.keys())
+        self.Yvalues = list(PubYear.values())
+        self.all_figures = []
+
+    def plot_sheet(self, data):
+        """plot single figure"""
+        fig, axs = plt.subplots(1,3, figsize=(10,5))     
+        axs[0].bar(self.names, self.values) 
+        axs[1].bar(self.Cnames, self.Cvalues)
+        axs[2].bar(self.Ynames, self.Yvalues)
+        plt.setp(axs[0].get_xticklabels(),rotation=90)
+        plt.setp(axs[1].get_xticklabels(),rotation=90)
+        plt.setp(axs[2].get_xticklabels(),rotation=90, fontsize=7)
+        return fig
+
+    def generate_all_figures(self):
+        """create all figures and keep them on list"""
+        for data in self.sheets: 
+            fig = self.plot_sheet(data)
+            fig.subplots_adjust(bottom=0.4)
+            self.all_figures.append(fig)
+def show_figure(number):
+    global dataPlot
+
+    # remove old canvas
+    if dataPlot is not None: # at start there is no canvas to destroy
+        dataPlot.get_tk_widget().destroy()
+
+    # get figure from list
+    one_figure = my_class.all_figures[number]
+
+    # display canvas with figure
+    dataPlot = FigureCanvasTkAgg(one_figure, master=window)
+    dataPlot.draw()
+    dataPlot.get_tk_widget().grid(row=0, column=0)
+
+def on_prev():
+    global selected_figure
+
+    # get number of previous figure
+    selected_figure -= 1
+    if selected_figure < 0:
+        selected_figure = len(my_class.all_figures)-1
+
+    show_figure(selected_figure)
+
+def on_next():
+    global selected_figure
+
+    # get number of next figure
+    selected_figure += 1
+    if selected_figure > len(my_class.all_figures)-1:
+        selected_figure = 0
+
+    show_figure(selected_figure)
+
+my_class = MyClass()
+my_class.generate_all_figures()
+
+window = canvas
+window.rowconfigure(0, minsize=500)    # minimal height
+window.columnconfigure(0, minsize=700) # minimal width
+
+# display first figure    
+selected_figure = 0
+dataPlot = None # default value for `show_figure`
+show_figure(selected_figure)
+
+# add buttons to change figures
+frame = tk.Frame(window)
+frame.grid(row=1, column=0)
+
+b1 = tk.Button(frame, text="<<", command=on_prev)
+b1.grid(row=0, column=0)
+
+b2 = tk.Button(frame, text=">>", command=on_next)
+b2.grid(row=0, column=1)
+
+"""main menu"""
+main_menu = Menu(main)
+main.config(menu=main_menu)
+
+"""submenu"""
+text_menu = Menu(main_menu, tearoff=False)
+"""submenu"""
+text_menu.add_command(label='Delete Last Record',
+              command=deletelastrecord)
+text_menu.add_command(label='Show all GN - AM',
+              command=showonlyGN)
+text_menu.add_command(label='Count comics',
+              command=countcomicsperpublisher)
+text_menu.add_command(label='Calculate Series',
+              command=CalcSeries)
+text_menu.add_command(label='Calculate Data',
+              command=CalcData)
+text_menu.add_command(label='Count issues/year',
+              command=countnryear)
+
+"""Naam menu"""
+main_menu.add_cascade(label="Actions", menu=text_menu)
+
+
+ 
+main.mainloop()
+
